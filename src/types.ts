@@ -4,6 +4,7 @@ export interface CommonplaceNotesSettings {
     publishingProfiles: PublishingProfile[];
 	debugMode?: boolean;
 	uidLength?: number;
+	terminalApp?: string; // 'auto' | 'Terminal' | 'iTerm2' | 'Warp'
 }
 
 export interface PublishingProfile {

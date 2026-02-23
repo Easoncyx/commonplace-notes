@@ -1,4 +1,5 @@
 import { execAsync } from '../utils/shell';
+import { execInTerminal } from '../utils/interactiveTerminal';
 import type CommonplaceNotesPlugin from '../main';
 import type { PublishingProfile } from '../types';
 import { Logger } from '../utils/logging';
@@ -26,20 +27,17 @@ export async function refreshCredentials(plugin: CommonplaceNotesPlugin, profile
 					.replace('${awsProfile}', profile.awsSettings?.awsProfile || '');
 			});
 
-		let {success, result, error} = await NoticeManager.showProgress(
-			`Refreshing AWS credentials`,
-			(async () => {
-				for (const command of commands) {
-					Logger.debug(`Executing: ${command}`);
-					await execAsync(command);
-				}
-			})(),
-			`Successfully refreshed AWS credentials`
-		);
-
-		if (!success) {
-			throw error;
+		if (commands.length === 0) {
+			NoticeManager.showNotice('No credential refresh commands configured for this profile');
+			return;
 		}
+
+		NoticeManager.showNotice('Opening terminal for credential refresh...');
+
+		const terminalApp = plugin.settings.terminalApp;
+		await execInTerminal(commands, terminalApp);
+
+		NoticeManager.showNotice('Successfully refreshed AWS credentials');
 	} catch (error) {
 		Logger.error('Failed to refresh credentials:', error);
 		NoticeManager.showNotice('Failed to refresh credentials: ' + (error as Error).message);

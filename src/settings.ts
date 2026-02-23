@@ -17,7 +17,26 @@ export class CommonplaceNotesSettingTab extends PluginSettingTab {
         Logger.debug('Clearing container');
 		containerEl.empty();
 
-		Logger.debug('Creating header');
+		// General settings
+		Logger.debug('Creating general settings header');
+		containerEl.createEl('h2', {text: 'General settings'});
+
+		new Setting(containerEl)
+			.setName('Terminal application')
+			.setDesc('Terminal app used for interactive commands (e.g., credential refresh). Auto-detect picks Warp > iTerm2 > Terminal.app.')
+			.addDropdown(dropdown => dropdown
+				.addOption('auto', 'Auto-detect')
+				.addOption('Terminal', 'Terminal.app')
+				.addOption('iTerm2', 'iTerm2')
+				.addOption('Warp', 'Warp')
+				.setValue(this.plugin.settings.terminalApp || 'auto')
+				.onChange(async (value) => {
+					this.plugin.settings.terminalApp = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Publishing profiles
+		Logger.debug('Creating profiles header');
 		containerEl.createEl('h2', {text: 'Publishing profiles'});
 
 		// Add button to create new profile
@@ -31,7 +50,6 @@ export class CommonplaceNotesSettingTab extends PluginSettingTab {
 					await this.addNewProfile();
 				}));
 
-		// Display existing profiles
 		Logger.debug(`Displaying ${this.plugin.settings.publishingProfiles.length} profiles`);
 		this.plugin.settings.publishingProfiles.forEach((profile, index) => {
 			Logger.debug(`Processing profile ${index}: ${profile.name}`);
