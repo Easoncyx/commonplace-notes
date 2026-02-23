@@ -1,7 +1,7 @@
-import { MarkdownRenderer } from 'obsidian';
+import { Component, MarkdownRenderer } from 'obsidian';
 import { Logger } from './logging';
 
-export async function convertMarkdownToPlaintext(markdown: string): Promise<string> {
+export async function convertMarkdownToPlaintext(markdown: string, component: Component): Promise<string> {
 	try {
 		// Clean up problematic syntax
 		let cleanMarkdown = markdown;
@@ -18,7 +18,7 @@ export async function convertMarkdownToPlaintext(markdown: string): Promise<stri
 				cleanMarkdown,
 				element,
 				'',
-				this
+				component
 			);
 		} catch (renderError) {
 			Logger.warn(`Render error, falling back to basic cleanup:`, renderError);

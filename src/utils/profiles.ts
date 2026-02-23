@@ -31,6 +31,7 @@ export class ProfileManager {
 			this.getProfileDir(profileId),
 			this.getMappingDir(profileId),
 			this.getStagedNotesDir(profileId),
+			this.getStagedAssetsDir(profileId),
 			this.getStagedErrorDir(profileId)
 		];
 
@@ -73,6 +74,10 @@ export class ProfileManager {
 
 	getStagedNotesDir(profileId: string): string {
 		return `${this.getProfileDir(profileId)}/staged-notes`;
+	}
+
+	getStagedAssetsDir(profileId: string): string {
+		return `${this.getProfileDir(profileId)}/staged-assets`;
 	}
 
 	getStagedErrorDir(profileId: string): string {

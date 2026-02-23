@@ -34,20 +34,22 @@ The plugin uses a manager-based architecture where each concern is encapsulated 
 - **FrontmatterManager** (`src/utils/frontmatter.ts`) — YAML frontmatter read/write via Obsidian metadata API
 - **IndicatorManager** (`src/utils/indicators.ts`) — Visual indicators in the file explorer showing publish status per profile
 - **ContentIndexManager** (`src/utils/contentIndex.ts`) — Builds searchable content index (FlexSearch/Fuse.js)
+- **ImageManager** (`src/utils/imageManager.ts`) — Image processing: resolves vault paths, reads binaries, SHA-1 hashes for deduplication, stages to disk, generates URLs for published output
 - **MappingManager** (`src/utils/mappings.ts`) — Context mappings for bulk publishing
 - **TemplateManager** (`src/utils/templateManager.ts`) — HTML template management for published output
 
 ### Publishing Pipeline
 
 `src/publish/` contains the publishing logic:
-- `publisher.ts` — Core publish flow: resolve note connections, convert markdown to HTML (remark/rehype pipeline with plugins for Obsidian links, math, code highlighting), generate metadata, upload
-- `awsUpload.ts` / `awsCredentials.ts` — S3 upload and credential refresh (launched in an interactive terminal via AppleScript)
+- `publisher.ts` — Core publish flow: resolve note connections, convert markdown to HTML (remark/rehype pipeline with plugins for images, Obsidian links, code highlighting), generate metadata, upload, and cleanup (including staged assets)
+- `awsUpload.ts` / `awsCredentials.ts` — S3 upload (notes, mappings, content index, and image assets via `s3 sync`) and credential refresh (launched in an interactive terminal via AppleScript)
 - `local.ts` — Local filesystem publishing
 - `credentials.ts` / `upload.ts` — Interfaces for credential and upload abstractions
 
 ### Custom Remark Plugins
 
-- `src/utils/remarkObsidianLinks.ts` — Transforms Obsidian `[[wikilinks]]` into navigable HTML links
+- `src/utils/remarkObsidianImages.ts` — Detects Obsidian `![[image]]` embeds and standard `![alt](path)` images, resolves them via `ImageManager`, and rewrites URLs to point at uploaded assets
+- `src/utils/remarkObsidianLinks.ts` — Transforms Obsidian `[[wikilinks]]` into navigable HTML links (uses negative lookbehind to skip `![[image]]` embeds)
 - `src/utils/remarkLineNumbers.ts` — Adds line numbers to code blocks
 - `src/utils/interactiveTerminal.ts` — Launches commands in a real macOS terminal (Terminal.app, iTerm2, or Warp) via AppleScript, polls a marker file for completion
 

@@ -105,6 +105,31 @@ export async function pushLocalJsonsToS3(
 			}
 		}
 
+		// Upload staged assets (images)
+		const stagedAssetsDir = plugin.profileManager.getStagedAssetsDir(profileId);
+		if (await plugin.app.vault.adapter.exists(stagedAssetsDir)) {
+			const assetFiles = await plugin.app.vault.adapter.list(stagedAssetsDir);
+			if (assetFiles.files.length > 0) {
+				const assetsPath = `"${path.resolve(path.join(basePath, stagedAssetsDir))}"`;
+				const assetsS3Prefix = `s3://${profile.awsSettings.bucketName}/${s3Prefix}assets/`;
+				// 'sync' provides natural deduplication — files with same hash name are skipped
+				const cmdAssets = `${awsCommand} s3 sync ${assetsPath} ${assetsS3Prefix} --profile ${profile.awsSettings.awsProfile}`;
+				Logger.debug('Executing command:', cmdAssets);
+
+				const { result: assetsResult } = await NoticeManager.showProgress(
+					`Uploading ${assetFiles.files.length} asset(s) to S3`,
+					execAsync(cmdAssets, options),
+					`Assets uploaded to S3`,
+					`Asset upload failed, check console for error details`
+				);
+				if (assetsResult && assetsResult?.stderr) {
+					Logger.debug(`stdout from aws command: ${assetsResult?.stdout}`);
+					throw new Error(`Asset upload failed: ${assetsResult?.stderr}`);
+				}
+				Logger.debug('Assets upload output:', assetsResult?.stdout);
+			}
+		}
+
 		// Trigger CloudFront cache invalidation if configured to
 		if (triggerCloudFrontInvalidation) {
 			await createCloudFrontInvalidation(plugin, profileId);

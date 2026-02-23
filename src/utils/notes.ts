@@ -6,6 +6,7 @@ import rehypeStringify from 'rehype-stringify';
 import CommonplaceNotesPlugin from '../main';
 import { PathUtils } from './path';
 import remarkObsidianLinks, { ResolvedNoteInfo } from './remarkObsidianLinks';
+import remarkObsidianImages, { preprocessObsidianImages } from './remarkObsidianImages';
 import remarkLineNumbers from './remarkLineNumbers';
 import { Logger } from './logging';
 import { NoticeManager } from '../utils/notice';
@@ -121,9 +122,18 @@ export class NoteManager {
 	}
 
 	async markdownToHtml(markdown: string, currentFile: TFile, profileId: string): Promise<string> {
+		// Preprocess Obsidian image embeds before remark-parse sees them,
+		// because remark's tokenizer splits ![[...]] across AST nodes.
+		markdown = preprocessObsidianImages(markdown);
+
 		const processor = unified()
 			.use(remarkParse)
 			.use(remarkLineNumbers)
+			.use(remarkObsidianImages, {
+				resolveImage: async (imageName: string) => {
+					return this.plugin.imageManager.processImage(imageName, currentFile.path, profileId);
+				}
+			})
 			.use(remarkObsidianLinks, {
 				frontmatterManager: this.plugin.frontmatterManager,
 				resolveInternalLinks: async (linkText: string): Promise<ResolvedNoteInfo | null> => {

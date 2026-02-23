@@ -191,8 +191,10 @@ export class Publisher {
 				return;
 			}
 
-			// Clean up staged files
+			// Clean up staged files and assets
 			await this.cleanupStagedFiles(profile.id);
+			await this.cleanupStagedAssets(profile.id);
+			this.plugin.imageManager.clear();
 
 			// Update timestamp for full publishes
 			if (updatePublishTimestamp) {
@@ -210,6 +212,9 @@ export class Publisher {
 			NoticeManager.showNotice(`Error during publishing: ${error.message}`);
 			Logger.error('Publishing error:', error);
 
+			// Reset image manager state on failure
+			this.plugin.imageManager.clear();
+
 			// Move staged files to error directory
 			await this.handlePublishError(profile.id, error);
 		}
@@ -218,6 +223,11 @@ export class Publisher {
 	private async cleanupStagedFiles(profileId: string) {
 		const stagedDir = this.plugin.profileManager.getStagedNotesDir(profileId);
 		await new PathUtils().deleteFilesInDirectory(this.plugin, stagedDir);
+	}
+
+	private async cleanupStagedAssets(profileId: string) {
+		const stagedAssetsDir = this.plugin.profileManager.getStagedAssetsDir(profileId);
+		await new PathUtils().deleteFilesInDirectory(this.plugin, stagedAssetsDir);
 	}
 
 	private async handlePublishError(profileId: string, error: Error) {

@@ -19,6 +19,7 @@ import { MappingManager } from './utils/mappings';
 import { NoticeManager } from './utils/notice';
 import { TemplateManager } from './utils/templateManager';
 import { AwsCliManager } from './utils/awsCli';
+import { ImageManager } from './utils/imageManager';
 import { Publisher } from './publish/publisher';
 import { Logger } from './utils/logging';
 
@@ -76,6 +77,7 @@ export default class CommonplaceNotesPlugin extends Plugin {
 	contentIndexManager: ContentIndexManager;
 	mappingManager: MappingManager;
 	templateManager: TemplateManager;
+	imageManager: ImageManager;
 	publisher: Publisher;
 	awsCliManager: AwsCliManager;
 
@@ -93,6 +95,7 @@ export default class CommonplaceNotesPlugin extends Plugin {
 		this.mappingManager = new MappingManager(this);
 		this.publisher = new Publisher(this);
 		this.templateManager = new TemplateManager(this);
+		this.imageManager = new ImageManager(this);
 		this.awsCliManager = new AwsCliManager(this);
 
 		// Initialize indicator updates
@@ -122,9 +125,10 @@ export default class CommonplaceNotesPlugin extends Plugin {
 		this.addSettingTab(new CommonplaceNotesSettingTab(this.app, this));
 		this.registerCommands();
 
-		// Refresh indicators upon fully loading
+		// Defer work that needs a fully initialized workspace
 		this.app.workspace.onLayoutReady(async () => {
-			Logger.debug('Layout ready, initializing indicators');
+			Logger.debug('Layout ready, initializing indicators and profile commands');
+			this.registerProfileCommands();
 			await this.indicatorManager.updateAllVisibleIndicators();
 		});
 	}
@@ -230,7 +234,6 @@ export default class CommonplaceNotesPlugin extends Plugin {
 			}
 		});
 
-		this.registerProfileCommands();
 	}
 
 	async loadSettings() {
